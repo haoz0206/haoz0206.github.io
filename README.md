@@ -42,4 +42,7 @@ assets/img/       favicon (+ optional images)
 ## Deployment
 
 This is a GitHub **user site**: pushing to the default branch of the
-`haoz0206.github.io` repo publishes automatically to `https://haoz0206.github.io`.
+`haoz0206.github.io` repo publishes automatically to the live site.
+
+For hosting, custom domain (`me.haoz.uk`), DNS records, HTTPS, and
+troubleshooting, see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
