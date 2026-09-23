@@ -18,96 +18,92 @@
   const linkIcon = (k) => ICONS[k] || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>';
 
   function boldMe(authors) {
-    return authors.replace(/Hao Zhong/g, '<span class="me">Hao Zhong</span>');
+    return authors.replace(/Hao Zhong/g, '<strong class="me">Hao Zhong</strong>');
   }
 
-  /* ---------------- render: profile rail ---------------- */
-  function renderRail(p) {
+  function renderProfile(p) {
     const links = Object.entries(p.links)
-      .map(([k, url]) => `<li><a href="${url}">${linkIcon(k)}<span>${k}</span></a></li>`)
+      .map(([label, url]) => `<li><a href="${url}">${linkIcon(label)}<span>${label}</span></a></li>`)
       .join("");
-    $("#rail").innerHTML =
-      `<h1>${p.name}</h1>` +
-      `<div class="tagline">${p.tagline}</div>` +
-      `<div class="affil">${p.affiliation}<br><span class="loc">${p.location}</span></div>` +
-      `<ul class="links">${links}</ul>`;
-    $("#foot-name").textContent = p.name;
+    $("#profile").innerHTML =
+      `<p class="eyebrow">${p.role}</p>` +
+      `<h1 id="profile-name">${p.name}<span class="name-zh" lang="zh">${p.zh}</span></h1>` +
+      `<p class="affiliation">${p.affiliation}</p>` +
+      `<p class="location">${p.location}</p>` +
+      `<ul class="profile-links">${links}</ul>`;
+    $("#foot-name").textContent = p.name + " · " + p.zh;
+    $("#about-body").innerHTML = DATA.about
+      .map((paragraph) => `<p>${paragraph}</p>`).join("");
   }
 
-  /* ---------------- render: publications ---------------- */
-  let pubFilter =
-    new URLSearchParams(location.search).get("pubs") === "all" ? "all" : "selected";
+  function publication(p, featured) {
+    const li = el("li", featured ? "pub featured-pub" : "pub");
+    const links = Object.entries(p.links || {})
+      .map(([label, url]) => `<a href="${url}">${label}<span aria-hidden="true"> ↗</span></a>`).join("");
+    const titleLink = p.links?.arXiv || p.links?.Project || p.links?.Code;
+    const heading = titleLink ? `<a href="${titleLink}">${p.title}</a>` : p.title;
+    const imageLink = p.links?.Project || titleLink || p.img;
+    const marker = p.img ?
+      `<a class="pub-thumbnail" href="${imageLink}" aria-label="View ${p.shortTitle || p.title}">` +
+      `<span class="thumbnail-frame"><img src="${p.img}" alt="${p.imgAlt || p.title}"${p.imgWidth && p.imgHeight ? ` width="${p.imgWidth}" height="${p.imgHeight}"` : ""} loading="lazy" decoding="async" /></span>` +
+      (featured ? `<span class="thumbnail-caption">${p.shortTitle}<span>${p.topic}</span></span>` : "") + `</a>` :
+      (featured ? `<div class="pub-identity"><span class="eyebrow">${p.topic}</span><span class="short-title">${p.shortTitle}</span><span class="identity-venue">${p.venue}</span></div>` : "");
+    if (p.img) li.classList.add("has-thumbnail");
+    li.innerHTML = marker + `<div class="pub-body">` +
+      `<h3 class="ptitle">${heading}</h3>` +
+      `<p class="authors">${boldMe(p.authors)}</p>` +
+      `<p class="pub-meta"><span class="venue">${p.venue}</span>${p.tag ? `<span>${p.tag}</span>` : ""}</p>` +
+      (p.summary ? `<p class="pub-summary">${p.summary}</p>` : "") +
+      (links ? `<div class="paper-links" aria-label="Resources for ${p.shortTitle || p.title}">${links}</div>` : "") +
+      (p.note ? `<p class="pnote">${p.note}</p>` : "") + `</div>`;
+    return li;
+  }
+
   function renderPubs() {
-    const list = $("#pub-list");
-    list.innerHTML = "";
-    const items = DATA.pubs.filter((p) => (pubFilter === "all" ? true : p.selected));
-    items.forEach((p) => {
-      const li = el("li", "pub");
-      const links = Object.entries(p.links || {})
-        .map(([k, url]) => `<a href="${url}">${k}</a>`)
-        .join("");
-      li.innerHTML =
-        `<p class="ptitle">${p.title}${p.selected ? '<span class="selstar">★</span>' : ''}</p>` +
-        `<p class="authors">${boldMe(p.authors)}</p>` +
-        `<div class="meta"><span class="venue">${p.venue}</span>` +
-        (p.tag ? `<span class="badge tag">${p.tag}</span>` : "") +
-        (links ? `<span class="plinks">${links}</span>` : "") +
-        `</div>` +
-        (p.note ? `<p class="pnote${p.confirm ? ' confirm' : ''}">${p.note}</p>` : "");
-      list.appendChild(li);
+    DATA.pubs.filter((p) => p.selected).forEach((p) => $("#selected-pubs").appendChild(publication(p, true)));
+    const others = DATA.pubs.filter((p) => !p.selected);
+    const years = [...new Set(others.map((p) => p.year))].sort((a, b) => b - a);
+    years.forEach((year) => {
+      const group = el("div", "year-group");
+      group.appendChild(el("h3", "year-label", String(year)));
+      const list = el("ol", "pubs");
+      others.filter((p) => p.year === year).forEach((p) => list.appendChild(publication(p, false)));
+      group.appendChild(list);
+      $("#more-pubs").appendChild(group);
     });
-    $("#pub-count").textContent = `Showing ${items.length} of ${DATA.pubs.length}.`;
   }
 
-  /* ---------------- render: simple lists ---------------- */
-  function renderAbout() {
-    $("#about-body").innerHTML = DATA.about.map((p) => `<p>${p}</p>`).join("");
-  }
   function renderNews() {
-    $("#news-list").innerHTML = DATA.news
-      .map((n) => `<li><span class="date">${n.date}</span><span class="body">${n.html}</span></li>`)
-      .join("");
-  }
-  function renderTimeline(id, arr) {
-    $(id).innerHTML = arr
-      .map(
-        (it) =>
-          `<div class="tl-item"><div><div class="role">${it.role}</div>` +
-          `<div class="org">${it.org}${it.place ? " · " + it.place : ""}</div></div>` +
-          `<div class="period">${it.period}</div>` +
-          `<div class="detail">${it.detail}</div></div>`
-      )
-      .join("");
+    const render = (items) => items.map((n) =>
+      `<li><span class="date">${n.date}</span><span>${n.html}</span></li>`).join("");
+    $("#news-list").innerHTML = render(DATA.news.slice(0, 3));
+    $("#older-news-list").innerHTML = render(DATA.news.slice(3));
+    $(".older-news").hidden = DATA.news.length <= 3;
   }
 
-  /* ---------------- theme toggle ---------------- */
+  function renderEducation() {
+    $("#education-list").innerHTML = DATA.education.map((it) =>
+      `<div class="education-item"><p class="period">${it.period}</p><div>` +
+      `<h3>${it.role}</h3><p class="org">${it.org}</p>` +
+      `<p class="detail">${it.detail}</p></div></div>`).join("");
+  }
+
   function setThemeBtn() {
-    $("#theme-btn").textContent =
-      document.documentElement.dataset.theme === "dark" ? "☀" : "☾";
+    const dark = document.documentElement.dataset.theme === "dark";
+    $("#theme-btn").textContent = dark ? "☀" : "☾";
+    $("#theme-btn").setAttribute("aria-label", `Switch to ${dark ? "light" : "dark"} theme`);
+    $("#theme-btn").title = `Switch to ${dark ? "light" : "dark"} theme`;
   }
   $("#theme-btn").addEventListener("click", () => {
-    const cur = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = cur;
-    localStorage.setItem("theme", cur);
+    const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem("theme", theme); } catch (_) {}
     setThemeBtn();
   });
 
-  /* ---------------- pub filter toggle ---------------- */
-  $("#pub-toggle").addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    pubFilter = btn.dataset.filter;
-    $("#pub-toggle").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
-    renderPubs();
-  });
-
-  /* ---------------- boot ---------------- */
-  renderRail(DATA.profile);
-  renderAbout();
+  renderProfile(DATA.profile);
   renderNews();
-  $("#pub-toggle").querySelectorAll("button").forEach((b) =>
-    b.classList.toggle("on", b.dataset.filter === pubFilter));
   renderPubs();
-  renderTimeline("#education-list", DATA.education);
+  renderEducation();
   setThemeBtn();
 })();

@@ -1,107 +1,116 @@
-# Deployment & Domain Configuration
+# Deployment and custom domain
 
-Operational reference for `haoz0206.github.io` (the site served at **https://me.haoz.uk**).
-For day-to-day content edits see [README.md](README.md); this file documents hosting, DNS, and HTTPS.
+Operational reference for [me.haoz.uk](https://me.haoz.uk).
+For content and file organization, see [README.md](README.md).
 
----
+## Hosting
 
-## 1. Overview
-
-| Item | Value |
-|---|---|
-| Live URL | **https://me.haoz.uk** |
-| Hosting | GitHub Pages (user site) |
+| Setting | Value |
+| --- | --- |
 | Repository | `haoz0206/haoz0206.github.io` |
-| Publishing branch | `master` (root, `/`) |
-| Custom domain | `me.haoz.uk` (subdomain of `haoz.uk`, DNS on Cloudflare) |
-| TLS certificate | Let's Encrypt, auto-provisioned & auto-renewed by GitHub |
-| Enforce HTTPS | On |
-| Redirects | `http://me.haoz.uk` → `https://me.haoz.uk`; `haoz0206.github.io` → `https://me.haoz.uk` (301) |
+| Hosting | GitHub Pages user site |
+| Publishing source | `master`, repository root (`/`) |
+| Custom domain | `me.haoz.uk` |
+| DNS provider | Cloudflare, zone `haoz.uk` |
+| HTTPS | Enforced; certificate managed by GitHub Pages |
 
-Because this repo is named `<user>.github.io`, **pushing to `master` auto-publishes** — no Actions/workflow needed. The `.nojekyll` file makes GitHub serve files as-is.
+The publishing source is configured in repository **Settings → Pages**.
+Pushing to `master` triggers GitHub's **pages build and deployment** workflow.
+There is no custom workflow file or local build step. `.nojekyll` tells Pages
+to serve the static files without Jekyll processing.
 
----
+## Publish an approved local version
 
-## 2. Repository layout
+1. Preview the change locally and obtain the owner's approval to publish.
+2. Review and commit the intended files on the working branch.
+3. Fetch remote changes. Bring the approved commit onto `master`; when `master`
+   has not diverged, use a fast-forward merge:
 
-```
-index.html        page shell + <head> SEO (canonical, OG, Twitter, JSON-LD)
-css/style.css     styles (light/dark via [data-theme])
-js/data.js        <-- SINGLE SOURCE OF TRUTH for all content
-js/main.js        renders data.js + theme/pub-filter toggles
-assets/img/       favicon.svg, og.png (social card), avatar.svg (unused)
-CNAME             custom domain: me.haoz.uk  (do not edit casually — see §4)
-sitemap.xml       lists https://me.haoz.uk/
-robots.txt        allows all + points to sitemap
-.nojekyll         serve static files without Jekyll
-```
+   ```bash
+   git fetch origin
+   git switch master
+   git pull --ff-only origin master
+   git merge --ff-only <approved-branch>
+   git push origin master
+   ```
 
-Deploy workflow: edit `js/data.js` → `git commit` → `git push origin master`. Live within ~1 min.
+   Replace `<approved-branch>` with the actual branch name. If a fast-forward
+   fails, reconcile the changes and recheck the result before pushing.
+4. In **Actions**, wait for **pages build and deployment** to succeed for the
+   pushed commit. Publication and cache propagation can take several minutes.
+5. Check the live homepage, its scripts/styles, thumbnails, HTTPS, and redirects.
+   A successful push alone does not confirm the site has finished deploying.
 
----
+To undo a published change, revert the relevant commit and publish the revert
+through the same workflow. Do not force-push deployment history.
 
-## 3. DNS configuration (Cloudflare, zone `haoz.uk`)
+## DNS and HTTPS
 
-| Type | Name | Content / Target | Proxy | Purpose |
-|---|---|---|---|---|
-| **CNAME** | `me` | `haoz0206.github.io` | **DNS only (grey cloud)** | Points the subdomain at GitHub Pages |
-| **TXT** | `_github-pages-challenge-haoz0206` | *(token from GitHub)* | — | Account-level domain verification (anti-takeover) |
+The repository's `CNAME` file contains exactly `me.haoz.uk`. Keep it in sync
+with the custom domain in **Settings → Pages**.
 
-Notes:
-- **The `me` CNAME must stay grey-cloud (DNS only).** Orange-cloud/proxy causes cert-provisioning failures and 502s.
-- It correctly resolves to GitHub Pages IPs `185.199.108–111.153` (and IPv6 `2606:50c0::…`).
-- The TXT value comes from GitHub → repo **Settings → Pages → "Verify domains"**. Verifying the apex `haoz.uk` also covers subdomains like `me.haoz.uk`. Verification is optional (security), **not** required for HTTPS.
-- No **CAA** record exists on `haoz.uk`, so Let's Encrypt is allowed by default. If you ever add CAA records, include one for `letsencrypt.org` or HTTPS will break.
-- SOA **negative-cache TTL is 30 min** — after any DNS change, stale/"no record" answers can persist in resolvers for up to 30 minutes.
+| Type | Name | Target | Proxy setting |
+| --- | --- | --- | --- |
+| CNAME | `me` | `haoz0206.github.io` | DNS only |
 
-### Verify DNS from the command line
+The DNS-only setup serves traffic directly from GitHub Pages. It resolves to
+GitHub Pages addresses (`185.199.108.153` through `185.199.111.153`). Cloudflare
+nameservers and the CNAME target were checked on 2026-09-23.
+
+Domain ownership verification is a separate account-level setting under
+**GitHub account Settings → Pages**. GitHub supplies a TXT challenge such as
+`_github-pages-challenge-haoz0206`; use the exact name/value shown there.
+Verification of `haoz.uk` also covers its immediate subdomains. Do not remove
+an existing verification record during ordinary content maintenance.
+
+GitHub manages certificate issuance and renewal. The existing configuration
+uses Let's Encrypt. If adding CAA restrictions, allow `letsencrypt.org`.
+Keep **Enforce HTTPS** enabled. Normal content updates require no DNS or
+certificate changes.
+
+Expected redirects:
+
+- `http://me.haoz.uk/` → `https://me.haoz.uk/`
+- `https://haoz0206.github.io/` → `https://me.haoz.uk/`
+
+### Read-only checks
+
 ```bash
-dig +short me.haoz.uk A            # expect 185.199.108–111.153
-dig +short me.haoz.uk CNAME        # expect haoz0206.github.io.
-curl -sI https://me.haoz.uk/       # expect HTTP/2 200, Server: GitHub.com
+dig +short me.haoz.uk CNAME
+dig +short me.haoz.uk A
+curl -I https://me.haoz.uk/
+curl -I http://me.haoz.uk/
+curl -I https://haoz0206.github.io/
 ```
 
----
+The custom HTTPS URL should return 200; the other two should return 301 with
+`Location: https://me.haoz.uk/`.
 
-## 4. Custom domain & HTTPS on GitHub
+## Troubleshooting
 
-Configured under repo **Settings → Pages**:
-- **Custom domain**: `me.haoz.uk` (also stored in the repo `CNAME` file — keep the two in sync).
-- **Enforce HTTPS**: enabled.
+**Old content after a push:** check that the change reached `master` and the
+Pages run for that commit succeeded. Allow caches to refresh; compare the live
+`js/data.js` or stylesheet with the committed version, not only the page title.
 
-Correct one-time setup order (already done): add the DNS CNAME → set the custom domain in Settings/`CNAME` file → wait for GitHub's DNS check → GitHub requests the Let's Encrypt cert → enable Enforce HTTPS.
+**Local preview stops loading:** restart the preview server from the repository
+root. Keep its process running. Local preview does not depend on GitHub Pages.
 
-Cert issuance can take **up to ~1 hour** after configuration (the "Enforce HTTPS" checkbox can take up to 24 h to become available). The cert renews automatically; no action needed.
+**DNS check or HTTPS provisioning fails:** check the CNAME target and DNS-only
+setting, and inspect any CAA restrictions. DNS caches may retain earlier answers
+for their TTL; compare multiple resolvers before changing records again.
 
----
+**Certificate still unavailable after initial setup:** allow time for GitHub
+provisioning. If DNS is correct and provisioning remains stuck, consult GitHub
+Pages troubleshooting before removing/re-adding the custom domain. Repeated
+changes can restart validation and hit certificate issuance limits.
 
-## 5. SEO
+**Site fails on only one network/device:** compare DNS answers and try another
+network or resolver. Avoid changing the working domain configuration based on
+one device's cached result.
 
-Already in place (edit in `index.html` / `js/data.js`):
-- `<title>` with name + area + affiliation, meta description, `<link rel="canonical">`
-- Open Graph + Twitter Card tags → social share image `assets/img/og.png` (1200×630)
-- JSON-LD `Person` structured data (with `sameAs` → GitHub, Google Scholar)
-- `sitemap.xml` + `robots.txt`
+## Search and sharing metadata
 
-To improve ranking further: add `https://me.haoz.uk` in Google Search Console and submit the sitemap; link to it from Google Scholar, GitHub profile, and lab/co-author pages.
-
----
-
-## 6. Troubleshooting
-
-**HTTPS not available / "domain not properly configured":** usually the cert just hasn't provisioned yet (look at the *DNS Check* line — "in progress" = wait, not an error). Verify DNS with the commands in §3.
-
-**Cert stuck / not issuing:** confirm DNS resolves correctly from several resolvers (`1.1.1.1`, `8.8.8.8`, `9.9.9.9`), that the record isn't proxied, and that no blocking CAA exists. The documented fix is to **remove and re-add the custom domain once** (Settings → Pages) after DNS is correct — then wait. **Do not** repeatedly remove/re-add; that can hit Let's Encrypt rate limits and reset the timer.
-
-**Site unreachable from one device/network but fine elsewhere:** local DNS negative cache (see §3, 30-min TTL). Flush DNS (`ipconfig /flushdns` on Windows; `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder` on macOS; toggle airplane mode on iOS) or switch the device to `1.1.1.1`/`8.8.8.8`.
-
-**⚠️ Golden rule:** don't delete or re-touch the `me` CNAME record unless truly necessary — breaking it stops the site *and* HTTPS, and every change incurs up to 30 min of DNS negative-cache lag.
-
----
-
-## 7. Open items / TODO
-
-- LLaDA 2.1 — confirm exact author position (currently "et al. (Hao Zhong among authors)").
-- CVPR 2026 papers *Exploring Spatial Intelligence* and *Preserving Source Video Realism* — add a `Poster`/`Oral` badge once presentation type is known (currently shown as `CVPR 2026`, acceptance confirmed).
-- Add a real headshot and per-paper teaser images (optional; site currently text-only).
-- Google Search Console + backlinks (see §5).
+`index.html` contains the canonical URL, meta description, Open Graph/Twitter
+cards, and JSON-LD Person data. `robots.txt` points to `sitemap.xml`, whose URL
+must use the custom HTTPS domain. The social image is `assets/img/og.png`.
+Search indexing and social-preview caches can update later than the website.
