@@ -33,6 +33,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for the release workflow and domain setup.
 ├── assets/fonts/               Self-hosted woff2 subsets with their OFL licenses
 │   ├── SourceSerif4-display.woff2   Headings (static, weight 500, optical size 60)
 │   ├── SourceSerif4-text.woff2      Serif text (variable, weights 400–600)
+│   ├── SourceSerif4-text-italic.woff2   Serif italic (variable, weights 400–600)
 │   ├── Inter-latin.woff2            Sans text and interface (variable, weights 400–700)
 │   └── NotoSerifSC-name.woff2       The two glyphs of the Chinese name
 ├── assets/img/
@@ -105,12 +106,18 @@ The sharing image lives in `assets/img/og.png`.
 
 Fonts are self-hosted subsets in `assets/fonts/`: Source Serif 4 for headings and
 the biography, Inter for interface and metadata text, and a two-glyph Noto Serif SC
-file for the Chinese name. Each ships with its SIL Open Font License text. The
+file for the Chinese name. The serif includes an italic cut and old-style
+numerals, used for News text, dates, education periods, and year labels. Each
+ships with its SIL Open Font License text. The
 subsets cover Latin, Latin Extended-A, and common punctuation; if content needs
 other scripts, regenerate the subsets with fontTools (`pyftsubset`) instead of
 loading fonts from a third-party CDN. The favicon, touch icon, and `og.png` share
 the site's clay accent and serif; regenerate them together if the brand colour or
 name changes.
+
+A faint SVG noise overlay (`body::before` in `css/style.css`) gives the
+background a paper texture; lower its `opacity` or delete the rule to remove it.
+Section headings are numbered automatically with a CSS counter.
 
 ### Before publishing
 
