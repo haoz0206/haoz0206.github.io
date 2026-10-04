@@ -26,12 +26,19 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for the release workflow and domain setup.
 .
 ├── index.html                  Page structure and search/social metadata
 ├── css/
-│   └── style.css               Layout, typography, themes, responsive rules
+│   └── style.css               Design tokens, typography, layout, themes, responsive rules
 ├── js/
 │   ├── data.js                 Profile, biography, news, publications, education
 │   └── main.js                 Rendering and theme controls
+├── assets/fonts/               Self-hosted woff2 subsets with their OFL licenses
+│   ├── SourceSerif4-display.woff2   Headings (static, weight 500, optical size 60)
+│   ├── SourceSerif4-text.woff2      Serif text (variable, weights 400–600)
+│   ├── Inter-latin.woff2            Sans text and interface (variable, weights 400–700)
+│   └── NotoSerifSC-name.woff2       The two glyphs of the Chinese name
 ├── assets/img/
-│   ├── favicon.svg             Browser icon
+│   ├── favicon.svg             Browser icon (serif HZ on clay)
+│   ├── favicon-32.png          PNG fallback icon
+│   ├── apple-touch-icon.png    iOS home-screen icon
 │   ├── og.png                  Social sharing image
 │   └── papers/
 │       ├── reasonmatch.png     Publication thumbnails
@@ -53,7 +60,7 @@ Most content edits belong in **[js/data.js](js/data.js)**:
 
 | Field | Usage |
 | --- | --- |
-| `profile` | English/Chinese names, role, affiliation, location, contact links |
+| `profile` | English/Chinese names, role, affiliation, location, research-interest tags, contact links |
 | `about` | Biography paragraphs in display order; HTML links/emphasis allowed |
 | `news` | Newest first; the first three entries appear immediately, others under Earlier updates |
 | `pubs` | Publications; selected work first, then other papers grouped by descending year |
@@ -79,9 +86,10 @@ The exact author name `Hao Zhong` is automatically emphasized.
 
 For thumbnails, add `img`, descriptive `imgAlt`, and the actual pixel dimensions
 `imgWidth` / `imgHeight`. Store images in `assets/img/papers/` and record the
-source and any crop in [SOURCES.md](assets/img/papers/SOURCES.md). Thumbnails use
-their natural aspect ratio without extra padding; selected thumbnails are
-160–180 px wide depending on the viewport. They link to the project page when
+source and any crop in [SOURCES.md](assets/img/papers/SOURCES.md). Thumbnails are
+shown in a fixed 5:4 frame and cropped to fill it; for a wide figure, set the
+optional `imgPosition` (a CSS `object-position` value such as `"left center"`)
+to choose the part that stays visible. Thumbnails link to the project page when
 available. Selected entries without images use a text panel.
 
 ### Metadata and assets
@@ -92,6 +100,17 @@ These are separate from the rendered biography. Keep the canonical URL,
 `CNAME`, `robots.txt`, and `sitemap.xml` consistent with the live domain.
 Update the sitemap's `lastmod` date when publishing substantive homepage changes.
 The sharing image lives in `assets/img/og.png`.
+
+### Typography and brand assets
+
+Fonts are self-hosted subsets in `assets/fonts/`: Source Serif 4 for headings and
+the biography, Inter for interface and metadata text, and a two-glyph Noto Serif SC
+file for the Chinese name. Each ships with its SIL Open Font License text. The
+subsets cover Latin, Latin Extended-A, and common punctuation; if content needs
+other scripts, regenerate the subsets with fontTools (`pyftsubset`) instead of
+loading fonts from a third-party CDN. The favicon, touch icon, and `og.png` share
+the site's clay accent and serif; regenerate them together if the brand colour or
+name changes.
 
 ### Before publishing
 
@@ -108,6 +127,6 @@ These are editorial follow-ups, not deployment requirements:
 - Confirm the complete LLaDA 2.1 author list and add its paper/project link.
 - Confirm presentation types for Exploring Spatial Intelligence and
   Preserving Source Video Realism before adding badges.
-- Add a real portrait, CV, and further paper thumbnails when ready.
-  No placeholder portrait or missing CV link is displayed.
+- Add a CV and further paper thumbnails when ready. The owner has chosen not to
+  show a portrait; no placeholder is displayed.
 - Consider Google Search Console submission and links from academic profiles.

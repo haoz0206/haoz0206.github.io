@@ -6,10 +6,16 @@ const DATA = {
   profile: {
     name: "Hao Zhong",
     zh: "钟好",
-    role: "PhD student · Zhejiang University",
+    role: "PhD student",
     affiliation:
       "State Key Lab of CAD&CG, Zhejiang University",
     location: "Hangzhou, China",
+    interests: [
+      "Multimodal perception & reasoning",
+      "Reinforcement learning",
+      "VLA & world-action models",
+      "Scalable RL infrastructure",
+    ],
     links: {
       Email: "mailto:haoz0206@zju.edu.cn",
       GitHub: "https://github.com/haoz0206",
@@ -40,7 +46,7 @@ const DATA = {
       imgWidth: 465, imgHeight: 370,
       imgAlt: "ReasonMatch training curriculum with image pairs across different viewpoints",
       topic: "Spatial reasoning",
-      summary: "Eliciting complex spatial reasoning in multimodal language models through wide-baseline matching.",
+      summary: "Turns wide-baseline image matching, built automatically from RGB-D pairs and ordered from identical to hard viewpoints, into a training curriculum that elicits spatial reasoning which transfers to general spatial benchmarks.",
       title: "Eliciting Complex Spatial Reasoning in MLLMs through Wide-Baseline Matching",
       authors: "Hao Zhong, Muzhi Zhu, Shenyan Zeng, Anzhou Li, Cong Chen, Hua Geng, Duochao Shi, Wentao Ye, Tao Lin, Hao Chen, Chunhua Shen",
       venue: "CVPR 2026", tag: "Poster", year: 2026, selected: true,
@@ -88,7 +94,7 @@ const DATA = {
       imgWidth: 425, imgHeight: 328,
       imgAlt: "Omni-R1 inference through global reasoning and detail understanding systems",
       topic: "Omnimodal reasoning",
-      summary: "Reinforcement learning for omnimodal reasoning through two-system collaboration.",
+      summary: "Splits omnimodal reasoning into a global reasoning system that selects key frames and rewrites the task, and a detail understanding system that answers over high-resolution inputs, with the collaboration trained by reinforcement learning.",
       title: "Omni-R1: Reinforcement Learning for Omnimodal Reasoning via Two-System Collaboration",
       authors: "Hao Zhong, Muzhi Zhu, Zongze Du, Zheng Huang, Canyu Zhao, Mingyu Liu, Wen Wang, Hao Chen, Chunhua Shen",
       venue: "NeurIPS 2025", tag: "Poster", year: 2025, selected: true,
@@ -97,10 +103,10 @@ const DATA = {
     {
       shortTitle: "ACTIVE-o3",
       img: "assets/img/papers/active-o3.jpg",
-      imgWidth: 909, imgHeight: 355,
+      imgWidth: 909, imgHeight: 355, imgPosition: "left center",
       imgAlt: "ACTIVE-o3 motivating example: finding coins in a scene and the limitations of task-model-only detection",
       topic: "Active perception",
-      summary: "Empowering multimodal language models with active perception through pure reinforcement learning.",
+      summary: "Teaches an MLLM where to look: it proposes regions to zoom into before answering, learned with pure reinforcement learning and no supervised trajectories, improving small-object and dense-scene perception.",
       title: "ACTIVE-o3: Empowering MLLMs with Active Perception via Pure Reinforcement Learning",
       authors: "Muzhi Zhu, Hao Zhong, Canyu Zhao, Zongze Du, Zheng Huang, Mingyu Liu, Hao Chen, Cheng Zou, Jingdong Chen, Ming Yang, Chunhua Shen",
       venue: "ICML 2026", tag: "Poster", year: 2026, selected: true,
